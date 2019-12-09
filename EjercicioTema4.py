@@ -50,14 +50,21 @@ class EjercicioTema4:
             Column('altura', String)
         )
 
-        Deportistas = Table(
-            'Deportista', meta,
-            Column('id_deportista', Integer, primary_key=True),
+        Equipo = Table(
+            'Equipo', meta,
+            Column('id_equipo', Integer, primary_key=True),
             Column('nombre', String),
-            Column('sexo', String),
-            Column('peso', String),
-            Column('altura', String)
+            Column('iniciales', String)
         )
+
+        Evento = Table(
+            'Evento', meta,
+            Column('id_evento', Integer, primary_key=True),
+            Column('nombre', String),
+            Column('id_olimpiada', Integer),
+            Column('id_deporte', Integer)
+        )
+        # faltan claves ajenas
 
 
 
