@@ -5,7 +5,21 @@ import pymysql
 from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, String, MetaData
 
+engine = create_engine('mysql+pymysql://dm2:dm2@localhost/olimpiadas')
+conn = engine.connect()
+meta = MetaData()
+Deportistas = Table(
+    'Deportista', meta,
+    Column('id_deportista', Integer, primary_key=True),
+    Column('nombre', String),
+    Column('sexo', String),
+    Column('peso', String),
+    Column('altura', String)
+)
+
 class EjercicioTema4:
+
+
 
 
     @staticmethod
@@ -27,9 +41,7 @@ class EjercicioTema4:
 
 
 
-        engine = create_engine('mysql+pymysql://dm2:dm2@localhost/olimpiadas')
-        conn = engine.connect()
-        meta = MetaData()
+
 
 
 
@@ -41,14 +53,7 @@ class EjercicioTema4:
 
         )
 
-        Deportistas = Table(
-            'Deportista', meta,
-            Column('id_deportista', Integer, primary_key=True),
-            Column('nombre', String),
-            Column('sexo', String),
-            Column('peso', String),
-            Column('altura', String)
-        )
+
 
         Equipo = Table(
             'Equipo', meta,
