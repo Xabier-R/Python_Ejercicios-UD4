@@ -1,38 +1,95 @@
 from builtins import print
 import sqlite3
-# import mysql.connector as mysql
 import pymysql
-from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, Integer, String, MetaData
+from sqlalchemy import Table, Column, Integer, String, MetaData, create_engine, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+Base = declarative_base()
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import sessionmaker
 
-engine = create_engine('mysql+pymysql://dm2:dm2@localhost/olimpiadas')
-conn = engine.connect()
-meta = MetaData()
-Deportistas = Table(
-    'Deportista', meta,
-    Column('id_deportista', Integer, primary_key=True),
-    Column('nombre', String),
-    Column('sexo', String),
-    Column('peso', String),
-    Column('altura', String)
-)
+engine = create_engine('mysql+pymysql://dm2:dm2@localhost/olimpiadas',echo = True)
+
+
+class Deportista(Base):
+   __tablename__ = 'Deportista'
+
+   id_deportista = Column(Integer, primary_key=True)
+   nombre = Column(String)
+   sexo = Column(String)
+   peso = Column(Integer)
+   altura = Column(Integer)
+
+
+class Olimpiada(Base):
+   __tablename__ = 'Olimpiada'
+
+   id_olimpiada = Column(Integer, primary_key=True)
+   nombre = Column(String)
+   anio = Column(String)
+   temporada = Column(String)
+   ciudad = Column(String)
+
+
+class Deporte(Base):
+   __tablename__ = 'Deporte'
+
+   id_deporte = Column(Integer, primary_key = True)
+   nombre = Column(String)
+
+
+class Equipo(Base):
+   __tablename__ = 'Equipo'
+
+   id_equipo = Column(Integer, primary_key = True)
+   nombre = Column(String)
+   iniciales = Column(String)
+
+
+class Evento(Base):
+   __tablename__ = 'Evento'
+
+   id_evento = Column(Integer, primary_key = True)
+   nombre = Column(String)
+   id_olimpiada = Column(Integer, ForeignKey('Olimpiada.id_olimpiada'))
+   id_deporte = Column(Integer, ForeignKey('Deporte.id_deporte'))
+   olimpiada = relationship("Olimpiada", back_populates="eventos")
+   deporte = relationship("Deporte", back_populates="eventos")
+
+
+Olimpiada.eventos = relationship("Evento", order_by = Olimpiada.id_olimpiada, back_populates = "olimpiada")
+Deporte.eventos = relationship("Evento", order_by = Deporte.id_deporte, back_populates = "deporte")
+
+
+class Participacion(Base):
+   __tablename__ = 'Participacion'
+   id_deportista = Column(Integer, ForeignKey('Deportista.id_deportista'), primary_key=True)
+   id_evento = Column(Integer, ForeignKey('Evento.id_evento'), primary_key=True)
+   id_equipo = Column(Integer, ForeignKey('Equipo.id_equipo'))
+   edad = Column(Integer)
+   medalla = Column(String)
+   deportista = relationship("Deportista", back_populates="participaciones")
+   evento = relationship("Evento", back_populates="participaciones")
+   equipo = relationship("Equipo", back_populates="participaciones")
+
+
+Deportista.participaciones = relationship("Participacion", order_by=Deportista.id_deportista, back_populates="deportista")
+Evento.participaciones = relationship("Participacion", order_by=Evento.id_evento, back_populates="evento")
+Equipo.participaciones = relationship("Participacion", order_by=Equipo.id_equipo, back_populates="equipo")
+
 
 class EjercicioTema4:
-
-
-
 
     @staticmethod
     def listadoDeport():
         """Metodo que lista los deportistas que hayan participado en diferentes deportes"""
 
 
-
-
         querySeason = """SELECT id_olimpiada, nombre FROM Olimpiada WHERE temporada="""
+
         querySport = """SELECT id_deporte, nombre FROM Deporte WHERE EXISTS( \
                         SELECT * FROM Evento WHERE `Evento`.`id_deporte` = `Deporte`.`id_deporte`  \
                         AND	`Evento`.`id_olimpiada`="""
+
         queryEvent = """SELECT id_evento, nombre FROM Evento WHERE `id_olimpiada`= """
 
         queryDeportis = """SELECT nombre, sexo, altura, peso FROM Deportista WHERE EXISTS( \
@@ -45,44 +102,14 @@ class EjercicioTema4:
 
 
 
-
-        Deporte = Table(
-            'Deporte', meta,
-            Column('id_deporte', Integer, primary_key=True),
-            Column('nombre', String)
-
-        )
-
-
-
-        Equipo = Table(
-            'Equipo', meta,
-            Column('id_equipo', Integer, primary_key=True),
-            Column('nombre', String),
-            Column('iniciales', String)
-        )
-
-        Evento = Table(
-            'Evento', meta,
-            Column('id_evento', Integer, primary_key=True),
-            Column('nombre', String),
-            Column('id_olimpiada', Integer),
-            Column('id_deporte', Integer)
-        )
-        # faltan claves ajenas
-
-
-
         print("""En que BBDD quieres buscar: 1. MySql
                             2. SQLITE""")
         resp = int(input())
         if resp == 1:
 
-            d = Deportistas.select()
-            conn = engine.connect()
-            result = conn.execute(d)
-            for i in result:
-                print(i)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+
 
         elif resp == 2:
             conex = sqlite3.connect("Olimpiadas.sqlite")
@@ -92,18 +119,20 @@ class EjercicioTema4:
         print("Dime la temporada 'W' o 'S'")
         temp = input()
         if temp == "W" or temp == "w":
-            temporada = ['Winter']
+            tempo = 'Winter'
         elif temp == "S" or temp == "s":
-            temporada = ['Summer']
+            tempo = 'Summer'
         else:
             print("Temporada incorrecta")
 
         if resp == 1:
-            cursor.execute(querySeason + "%s", temporada)
-            olimpiadas = cursor.fetchall()
-            print(olimpiadas)
+
+            result = session.query(Olimpiada).filter(Olimpiada.temporada == tempo)
+            for row in result:
+                    print(row)
+
         elif resp == 2:
-            cursor.execute(querySeason + "?", temporada)
+            cursor.execute(querySeason + "?", tempo)
             olimpiadas = cursor.fetchall()
             print(olimpiadas)
 
@@ -175,11 +204,11 @@ class EjercicioTema4:
             elif (resp == 3):
                 Tema4.modifiMeda()
 
-            # elif (resp == 4):
-                # Tema4.nuevaParticipacionDeportista()
+            elif (resp == 4):
+                Tema4.nuevaParticipacionDeportista()
 
-            # elif (resp == 5):
-                # Tema4.eliminarPart()
+            elif (resp == 5):
+                Tema4.eliminarPart()
 
 
 
