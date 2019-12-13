@@ -129,7 +129,7 @@ class EjercicioTema4:
 
             result = session.query(Olimpiada).filter(Olimpiada.temporada == tempo)
             for row in result:
-                    print(row)
+                    print(row)   #devuelve objetos
 
         elif resp == 2:
             cursor.execute(querySeason + "?", tempo)
