@@ -129,7 +129,7 @@ class EjercicioTema4:
 
             result = session.query(Olimpiada).filter(Olimpiada.temporada == tempo)
             for row in result:
-                    print(row)   #devuelve objetos
+                    print(str(row.id_olimpiada)+"--"+row.nombre+"--"+row.ciudad)
 
         elif resp == 2:
             cursor.execute(querySeason + "?", tempo)
@@ -140,9 +140,9 @@ class EjercicioTema4:
         edicion = input()
 
         if resp == 1:
-            cursor.execute(querySport + "%s)", [edicion])
-            deportes = cursor.fetchall()
-            print(deportes)
+            result = session.query(Evento).filter(Evento.id_olimpiada == edicion).group_by(Evento.id_deporte)
+            for row in result:
+                print(str(row.deporte.id_deporte) + "--" + row.deporte.nombre)
 
         elif resp == 2:
             cursor.execute(querySport + "?)", [edicion])
@@ -152,7 +152,11 @@ class EjercicioTema4:
         print("Seleciona el deporte")
         deporte = input()
 
-        # if resp == 1:
+        if resp == 1:
+
+            result = session.query(Evento).filter(Evento.id_olimpiada == edicion).filter(Evento.id_deporte == deporte)
+            for row in result:
+                print(str(row.id_evento) + "--" + row.nombre)
 
 
         # elif resp == 2:
@@ -164,17 +168,18 @@ class EjercicioTema4:
 
         if resp == 1:
 
+            result = session.query(Participacion).filter(Participacion.id_evento == evento)
+            for row in result:
+                print(str(row.deportista.nombre) + " -- " + str(row.deportista.altura) + " -- " + str(row.deportista.peso)
+                      + " -- " + str(row.edad) + " -- " + str(row.equipo.nombre) + " -- "
+                      + str(row.medalla))
 
 
-            for i in Deportistas:
-                print(i)
 
         elif resp == 2:
             cursor.execute(queryDeportis + "?)", evento)
 
 
-            for i in Deportistas:
-                print(i)
 
 
 
