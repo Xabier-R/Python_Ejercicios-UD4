@@ -7,7 +7,8 @@ Base = declarative_base()
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 
-engine = create_engine('mysql+pymysql://dm2:dm2@localhost/olimpiadas',echo = True)
+#engine = create_engine('mysql+pymysql://dm2:dm2@localhost/olimpiadas', echo=True)
+engine = create_engine('mysql+pymysql://dm2:dm2@localhost/olimpiadas')
 
 
 class Deportista(Base):
@@ -83,25 +84,6 @@ class EjercicioTema4:
     def listadoDeport():
         """Metodo que lista los deportistas que hayan participado en diferentes deportes"""
 
-
-        querySeason = """SELECT id_olimpiada, nombre FROM Olimpiada WHERE temporada="""
-
-        querySport = """SELECT id_deporte, nombre FROM Deporte WHERE EXISTS( \
-                        SELECT * FROM Evento WHERE `Evento`.`id_deporte` = `Deporte`.`id_deporte`  \
-                        AND	`Evento`.`id_olimpiada`="""
-
-        queryEvent = """SELECT id_evento, nombre FROM Evento WHERE `id_olimpiada`= """
-
-        queryDeportis = """SELECT nombre, sexo, altura, peso FROM Deportista WHERE EXISTS( \
-                        SELECT * FROM Participacion WHERE `Deportista`.`id_deportista` = `Participacion`.`id_deportista` \
-                        AND `Participacion`.`id_evento`= """
-
-
-
-
-
-
-
         print("""En que BBDD quieres buscar: 1. MySql
                             2. SQLITE""")
         resp = int(input())
@@ -131,23 +113,21 @@ class EjercicioTema4:
             for row in result:
                     print(str(row.id_olimpiada)+"--"+row.nombre+"--"+row.ciudad)
 
-        elif resp == 2:
-            cursor.execute(querySeason + "?", tempo)
-            olimpiadas = cursor.fetchall()
-            print(olimpiadas)
+        # elif resp == 2:
+
 
         print("Seleciona la edicion olimpica")
         edicion = input()
 
         if resp == 1:
+
             result = session.query(Evento).filter(Evento.id_olimpiada == edicion).group_by(Evento.id_deporte)
+
             for row in result:
                 print(str(row.deporte.id_deporte) + "--" + row.deporte.nombre)
 
-        elif resp == 2:
-            cursor.execute(querySport + "?)", [edicion])
-            deportes = cursor.fetchall()
-            print(deportes)
+        # elif resp == 2:
+
 
         print("Seleciona el deporte")
         deporte = input()
@@ -169,18 +149,192 @@ class EjercicioTema4:
         if resp == 1:
 
             result = session.query(Participacion).filter(Participacion.id_evento == evento)
+
+            print(str(result[0].evento.olimpiada.temporada) + "--" + str(result[0].evento.olimpiada.nombre) + "--" +
+                    str(result[0].evento.deporte.nombre) + "--" + str(result[0].evento.nombre))
+
             for row in result:
+
                 print(str(row.deportista.nombre) + " -- " + str(row.deportista.altura) + " -- " + str(row.deportista.peso)
                       + " -- " + str(row.edad) + " -- " + str(row.equipo.nombre) + " -- "
                       + str(row.medalla))
 
 
 
+        # elif resp == 2:
+
+
+
+
+    @staticmethod
+    def modifiMeda():
+
+        print("""En que BBDD quieres buscar: 1. MySql
+                            2. SQLITE""")
+        resp = int(input())
+        if resp == 1:
+
+            Session = sessionmaker(bind=engine)
+            session = Session()
+
+
         elif resp == 2:
-            cursor.execute(queryDeportis + "?)", evento)
+            conex = sqlite3.connect("Olimpiadas.sqlite")
+            cursor = conex.cursor()
+
+
+        print("Dime nombre del deportista")
+        deportis = input()
+
+        if resp == 1:
+
+            result = session.query(Deportista).filter(Deportista.nombre.like("%"+deportis+"%"))
+            for row in result:
+                print(str(row.id_deportista) + "--" + row.nombre)
 
 
 
+        # elif resp == 2:
+
+
+
+        print("Dime el ID del deportista")
+        IDdep = int(input())
+
+        if resp == 1:
+
+            result = session.query(Participacion).filter(Participacion.id_deportista == IDdep)
+            for row in result:
+                print(str(row.evento.id_evento)+ "--" + (str(row.evento.nombre)))
+
+
+        # elif resp == 2:
+
+
+
+        print("Dime el ID del evento")
+        IDeven = int(input())
+
+        if resp == 1:
+
+            participacion = session.query(Participacion).filter(Participacion.id_deportista == IDdep)\
+                .filter(Participacion.id_evento == IDeven).first()
+
+            print("Su medalla es: "+str(participacion.medalla))
+
+            print("¿Quieres modificarla?")
+            resp = input()
+            if resp == "s":
+                print("Introduzca la nueva medalla")
+                nuevaMedalla = input()
+                participacion.medalla=nuevaMedalla
+                session.commit()
+
+                print("Actualizado")
+
+            else:
+                print("Se ha cancelado la actualizacion")
+
+
+        # elif resp == 2:
+
+
+
+    @staticmethod
+    def nuevaParticipacionDeportista():
+
+        print("""En que BBDD quieres buscar: 1. MySql
+                            2. SQLITE""")
+        resp = int(input())
+        if resp == 1:
+
+            Session = sessionmaker(bind=engine)
+            session = Session()
+
+
+        elif resp == 2:
+            conex = sqlite3.connect("Olimpiadas.sqlite")
+            cursor = conex.cursor()
+
+        print("Dime nombre del deportista")
+        deportis = input()
+
+        if resp == 1:
+
+            result = session.query(Deportista).filter(Deportista.nombre.like("%" + deportis + "%"))
+            for row in result:
+                print(str(row.id_deportista) + "--" + row.nombre)
+
+
+        # falta añadir el deportista si no lo encuentra!!!
+
+
+        # elif resp == 2:
+
+        print("Dime el ID del deportista")
+        IDdep = int(input())
+
+
+
+        print("Dime la temporada 'W' o 'S'")
+        temp = input()
+        if temp == "W" or temp == "w":
+            tempo = 'Winter'
+        elif temp == "S" or temp == "s":
+            tempo = 'Summer'
+        else:
+            print("Temporada incorrecta")
+
+        if resp == 1:
+
+            result = session.query(Olimpiada).filter(Olimpiada.temporada == tempo)
+            for row in result:
+                print(str(row.id_olimpiada) + "--" + row.nombre + "--" + row.ciudad)
+
+            # elif resp == 2:
+
+        print("Seleciona la edicion olimpica")
+        edicion = input()
+
+        if resp == 1:
+
+            result = session.query(Evento).filter(Evento.id_olimpiada == edicion).group_by(Evento.id_deporte)
+
+            for row in result:
+                print(str(row.deporte.id_deporte) + "--" + row.deporte.nombre)
+
+        # elif resp == 2:
+
+
+
+        print("Seleciona el deporte")
+        deporte = input()
+
+        if resp == 1:
+
+            result = session.query(Evento).filter(Evento.id_olimpiada == edicion).filter(Evento.id_deporte == deporte)
+            for row in result:
+                print(str(row.id_evento) + "--" + row.nombre)
+
+
+
+
+        # elif resp == 2:
+
+
+
+        print("Seleciona el evento")
+        IDEvento = int(input())
+
+
+        print("Dime la medalla")
+        medalla = input()
+
+
+        nuevaParti = Participacion(IDdep, IDEvento,0, 0, medalla)
+
+        session.add(nuevaParti)
+        session.commit()
 
 
 
@@ -190,11 +344,10 @@ class EjercicioTema4:
         resp = 9
         while (resp != 0):
             print("""
-   1. Listado de deportistas en diferentes deportes
-   2. Listado de deportistas participantes
-   3. Modificar medalla deportista
-   4. Añadir deportista/participación
-   5. Eliminar participación
+   1. Listado de deportistas participantes
+   2. Modificar medalla deportista
+   3. Añadir deportista/participación
+   4. Eliminar participación
 
    0. Salir""")
 
@@ -204,15 +357,12 @@ class EjercicioTema4:
                 Tema4.listadoDeport()
 
             elif (resp == 2):
-                Tema4.listadoDeport2()
-
-            elif (resp == 3):
                 Tema4.modifiMeda()
 
-            elif (resp == 4):
+            elif (resp == 3):
                 Tema4.nuevaParticipacionDeportista()
 
-            elif (resp == 5):
+            elif (resp == 4):
                 Tema4.eliminarPart()
 
 
