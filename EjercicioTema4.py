@@ -1,7 +1,7 @@
 from builtins import print
 import sqlite3
 import pymysql
-from sqlalchemy import Table, Column, Integer, String, MetaData, create_engine, ForeignKey
+from sqlalchemy import Table, Column, Integer, String, MetaData, create_engine, ForeignKey,func
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 from sqlalchemy.orm import relationship
@@ -331,10 +331,61 @@ class EjercicioTema4:
         medalla = input()
 
 
-        nuevaParti = Participacion(IDdep, IDEvento,0, 0, medalla)
+        nuevaParti = Participacion(IDdep, IDEvento, 0, 0, medalla)
 
         session.add(nuevaParti)
         session.commit()
+
+    @staticmethod
+    def eliminarPart():
+
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        # FALTA LA CONEXION A SQLITE
+
+
+
+        print("Dime nombre del deportista")
+        deportis=input()
+
+        result = session.query(Deportista).filter(Deportista.nombre.like("%" + deportis + "%"))
+        for row in result:
+            print(str(row.id_deportista) + "--" + row.nombre)
+
+
+        print("Dime el ID del deportista")
+        IDdep = int(input())
+
+
+        result = session.query(Participacion).filter(Participacion.id_deportista==IDdep)
+        for row in result:
+            print(str(row.evento.id_evento) + "--" + row.evento.nombre)
+
+
+        print("Dime el ID del evento")
+        IDeven = int(input())
+
+        result = session.query(func.count(Participacion)).filter(Participacion.id_deportista == IDdep).filter(Participacion.id_evento == IDeven)
+        print(result)
+        # No va el count
+
+        if result > 1:
+            print("Se va a proceder a borrar solo la participacion")
+            session.query(Participacion).filter(Participacion.id_deportista == IDdep).filter(
+                Participacion.id_evento == IDeven).delete()
+            session.commit()
+            print("Borrada")
+
+        else:
+            print("Se va a proceder a borrar el deportista y la participacion")
+            session.query(Participacion).filter(Participacion.id_deportista == IDdep).filter(
+                Participacion.id_evento == IDeven).delete()
+
+            session.query(Deportista).filter(Deportista.id_deportista == IDdep).delete()
+            session.commit()
+            print("Borrado")
+
+
 
 
 
