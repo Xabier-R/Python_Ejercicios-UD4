@@ -1,7 +1,7 @@
 from builtins import print
 import sqlite3
 import pymysql
-from sqlalchemy import Table, Column, Integer, String, MetaData, create_engine, ForeignKey,func
+from sqlalchemy import Table, Column, Integer, String, MetaData, create_engine, ForeignKey, func
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 from sqlalchemy.orm import relationship
@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 
 #engine = create_engine('mysql+pymysql://dm2:dm2@localhost/olimpiadas', echo=True)
 engine = create_engine('mysql+pymysql://dm2:dm2@localhost/olimpiadas')
-
+engineSqlite = create_engine('sqlite:///Olimpiadas.sqlite')
 
 class Deportista(Base):
    __tablename__ = 'Deportista'
@@ -92,10 +92,9 @@ class EjercicioTema4:
             Session = sessionmaker(bind=engine)
             session = Session()
 
-
         elif resp == 2:
-            conex = sqlite3.connect("Olimpiadas.sqlite")
-            cursor = conex.cursor()
+            Session = sessionmaker(bind=engineSqlite)
+            session = Session()
 
 
         print("Dime la temporada 'W' o 'S'")
@@ -107,80 +106,68 @@ class EjercicioTema4:
         else:
             print("Temporada incorrecta")
 
-        if resp == 1:
 
-            result = session.query(Olimpiada).filter(Olimpiada.temporada == tempo)
-            for row in result:
-                    print(str(row.id_olimpiada)+"--"+row.nombre+"--"+row.ciudad)
 
-        # elif resp == 2:
+        result = session.query(Olimpiada).filter(Olimpiada.temporada == tempo)
+        for row in result:
+                print(str(row.id_olimpiada)+"--"+row.nombre+"--"+row.ciudad)
+
+
+
 
 
         print("Seleciona la edicion olimpica")
         edicion = input()
 
-        if resp == 1:
 
-            result = session.query(Evento).filter(Evento.id_olimpiada == edicion).group_by(Evento.id_deporte)
+        result = session.query(Evento).filter(Evento.id_olimpiada == edicion).group_by(Evento.id_deporte)
 
-            for row in result:
-                print(str(row.deporte.id_deporte) + "--" + row.deporte.nombre)
-
-        # elif resp == 2:
+        for row in result:
+            print(str(row.deporte.id_deporte) + "--" + row.deporte.nombre)
 
 
         print("Seleciona el deporte")
         deporte = input()
 
-        if resp == 1:
 
-            result = session.query(Evento).filter(Evento.id_olimpiada == edicion).filter(Evento.id_deporte == deporte)
-            for row in result:
-                print(str(row.id_evento) + "--" + row.nombre)
-
-
-        # elif resp == 2:
-
+        result = session.query(Evento).filter(Evento.id_olimpiada == edicion).filter(Evento.id_deporte == deporte)
+        for row in result:
+            print(str(row.id_evento) + "--" + row.nombre)
 
 
         print("Seleciona el evento")
         evento = [input()]
 
-        if resp == 1:
+        result = session.query(Participacion).filter(Participacion.id_evento == evento)
 
-            result = session.query(Participacion).filter(Participacion.id_evento == evento)
+        print(str(result[0].evento.olimpiada.temporada) + "--" + str(result[0].evento.olimpiada.nombre) + "--" +
+                str(result[0].evento.deporte.nombre) + "--" + str(result[0].evento.nombre))
 
-            print(str(result[0].evento.olimpiada.temporada) + "--" + str(result[0].evento.olimpiada.nombre) + "--" +
-                    str(result[0].evento.deporte.nombre) + "--" + str(result[0].evento.nombre))
+        for row in result:
 
-            for row in result:
+            print(str(row.deportista.nombre) + " -- " + str(row.deportista.altura) + " -- " + str(row.deportista.peso)
+                  + " -- " + str(row.edad) + " -- " + str(row.equipo.nombre) + " -- "
+                  + str(row.medalla))
 
-                print(str(row.deportista.nombre) + " -- " + str(row.deportista.altura) + " -- " + str(row.deportista.peso)
-                      + " -- " + str(row.edad) + " -- " + str(row.equipo.nombre) + " -- "
-                      + str(row.medalla))
-
-
-
-        # elif resp == 2:
 
 
 
 
     @staticmethod
     def modifiMeda():
+        """Metodo que permitirá modificar la información sobre medallas de  un deportista"""
 
         print("""En que BBDD quieres buscar: 1. MySql
-                            2. SQLITE""")
+                                    2. SQLITE""")
         resp = int(input())
         if resp == 1:
 
             Session = sessionmaker(bind=engine)
             session = Session()
 
-
         elif resp == 2:
-            conex = sqlite3.connect("Olimpiadas.sqlite")
-            cursor = conex.cursor()
+            Session = sessionmaker(bind=engineSqlite)
+            session = Session()
 
 
         print("Dime nombre del deportista")
@@ -193,23 +180,12 @@ class EjercicioTema4:
                 print(str(row.id_deportista) + "--" + row.nombre)
 
 
-
-        # elif resp == 2:
-
-
-
         print("Dime el ID del deportista")
         IDdep = int(input())
 
-        if resp == 1:
-
-            result = session.query(Participacion).filter(Participacion.id_deportista == IDdep)
-            for row in result:
-                print(str(row.evento.id_evento)+ "--" + (str(row.evento.nombre)))
-
-
-        # elif resp == 2:
-
+        result = session.query(Participacion).filter(Participacion.id_deportista == IDdep)
+        for row in result:
+            print(str(row.evento.id_evento) + "--" + (str(row.evento.nombre)))
 
 
         print("Dime el ID del evento")
@@ -236,12 +212,9 @@ class EjercicioTema4:
                 print("Se ha cancelado la actualizacion")
 
 
-        # elif resp == 2:
-
-
-
     @staticmethod
     def nuevaParticipacionDeportista():
+        """Metodo que añade un deportista si no exite y le asigna una nueva participacion """
 
         print("""En que BBDD quieres buscar: 1. MySql
                             2. SQLITE""")
@@ -251,29 +224,49 @@ class EjercicioTema4:
             Session = sessionmaker(bind=engine)
             session = Session()
 
-
         elif resp == 2:
-            conex = sqlite3.connect("Olimpiadas.sqlite")
-            cursor = conex.cursor()
+            Session = sessionmaker(bind=engineSqlite)
+            session = Session()
 
         print("Dime nombre del deportista")
         deportis = input()
 
-        if resp == 1:
+        contDeport = session.query(Deportista).filter(Deportista.nombre.like("%" + deportis + "%")).count()
+
+
+        if contDeport == 0:
+            print("No se ha encontrado ningun deportista por lo que se va a crear")
+
+            print("Dime sexo")
+            sexo = input()
+
+            print("Dime peso")
+            peso = input()
+
+            print("Dime altura")
+            altura = input()
+
+
+            ID = session.query(Deportista).filter(Deportista.id_deportista)
+
+            for row in ID:
+                ultimoID=row.id_deportista
+
+            IDdep = ultimoID+1
+
+            nuevoDeportis = Deportista(id_deportista=IDdep, nombre=deportis, sexo=sexo, peso=peso, altura=altura)
+
+            session.add(nuevoDeportis)
+            session.commit()
+
+        else:
 
             result = session.query(Deportista).filter(Deportista.nombre.like("%" + deportis + "%"))
             for row in result:
                 print(str(row.id_deportista) + "--" + row.nombre)
 
-
-        # falta añadir el deportista si no lo encuentra!!!
-
-
-        # elif resp == 2:
-
-        print("Dime el ID del deportista")
-        IDdep = int(input())
-
+            print("Dime el ID del deportista")
+            IDdep = int(input())
 
 
         print("Dime la temporada 'W' o 'S'")
@@ -285,43 +278,26 @@ class EjercicioTema4:
         else:
             print("Temporada incorrecta")
 
-        if resp == 1:
+        result = session.query(Olimpiada).filter(Olimpiada.temporada == tempo)
+        for row in result:
+            print(str(row.id_olimpiada) + "--" + row.nombre + "--" + row.ciudad)
 
-            result = session.query(Olimpiada).filter(Olimpiada.temporada == tempo)
-            for row in result:
-                print(str(row.id_olimpiada) + "--" + row.nombre + "--" + row.ciudad)
-
-            # elif resp == 2:
 
         print("Seleciona la edicion olimpica")
         edicion = input()
 
-        if resp == 1:
+        result = session.query(Evento).filter(Evento.id_olimpiada == edicion).group_by(Evento.id_deporte)
 
-            result = session.query(Evento).filter(Evento.id_olimpiada == edicion).group_by(Evento.id_deporte)
-
-            for row in result:
-                print(str(row.deporte.id_deporte) + "--" + row.deporte.nombre)
-
-        # elif resp == 2:
-
+        for row in result:
+            print(str(row.deporte.id_deporte) + "--" + row.deporte.nombre)
 
 
         print("Seleciona el deporte")
         deporte = input()
 
-        if resp == 1:
-
-            result = session.query(Evento).filter(Evento.id_olimpiada == edicion).filter(Evento.id_deporte == deporte)
-            for row in result:
-                print(str(row.id_evento) + "--" + row.nombre)
-
-
-
-
-        # elif resp == 2:
-
-
+        result = session.query(Evento).filter(Evento.id_olimpiada == edicion).filter(Evento.id_deporte == deporte)
+        for row in result:
+            print(str(row.id_evento) + "--" + row.nombre)
 
         print("Seleciona el evento")
         IDEvento = int(input())
@@ -330,18 +306,27 @@ class EjercicioTema4:
         print("Dime la medalla")
         medalla = input()
 
-
-        nuevaParti = Participacion(IDdep, IDEvento, 0, 0, medalla)
+        nuevaParti = Participacion(id_deportista=IDdep, id_evento=IDEvento, id_equipo=1, edad=0, medalla=medalla)
 
         session.add(nuevaParti)
         session.commit()
 
     @staticmethod
     def eliminarPart():
+        """Metodo que elimina una participacion de un deportista """
 
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        # FALTA LA CONEXION A SQLITE
+        print("""En que BBDD quieres buscar: 1. MySql
+                            2. SQLITE""")
+        resp = int(input())
+        if resp == 1:
+
+            Session = sessionmaker(bind=engine)
+            session = Session()
+
+
+        elif resp == 2:
+            Session = sessionmaker(bind=engineSqlite)
+            session = Session()
 
 
 
@@ -356,7 +341,6 @@ class EjercicioTema4:
         print("Dime el ID del deportista")
         IDdep = int(input())
 
-
         result = session.query(Participacion).filter(Participacion.id_deportista==IDdep)
         for row in result:
             print(str(row.evento.id_evento) + "--" + row.evento.nombre)
@@ -365,11 +349,10 @@ class EjercicioTema4:
         print("Dime el ID del evento")
         IDeven = int(input())
 
-        result = session.query(func.count(Participacion)).filter(Participacion.id_deportista == IDdep).filter(Participacion.id_evento == IDeven)
-        print(result)
-        # No va el count
+        contPart = session.query(Participacion).filter(Participacion.id_deportista == IDdep).count()
 
-        if result > 1:
+
+        if contPart > 1:
             print("Se va a proceder a borrar solo la participacion")
             session.query(Participacion).filter(Participacion.id_deportista == IDdep).filter(
                 Participacion.id_evento == IDeven).delete()
@@ -387,11 +370,10 @@ class EjercicioTema4:
 
 
 
-
-
     @staticmethod
     def menu():
         """Metodo para la ejecucion del menu del programa"""
+
         resp = 9
         while (resp != 0):
             print("""
